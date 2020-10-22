@@ -38,63 +38,104 @@ operación seleccionada.
 #  Ruta a los archivos
 # ___________________________________________________
 
-accidentsfile = 'US_Accidents_Dec19.csv'
+accidentsfile = 'us_accidents_dis_2019.csv'
 
 # ___________________________________________________
 #  Menu principal
 # ___________________________________________________
 
-
-def printMenu():
+def mainMenu()->None:
+    """
+    Imprime el menu de opciones
+    """
     print("\n")
     print("*******************************************")
     print("Bienvenido")
-    print("1- Inicializar Analizador")
-    print("2- Cargar información de accidentes")
-    print("3- Consultar los accidentes en una fecha dada")
-    print("4- Requerimiento 2")
+    print("1- Cargar información de accidentes")
+    print("2- Consultar los accidentes en una fecha dada")
+    print("3- Requerimiento 2")
     print("0- Salir")
     print("*******************************************")
+"""
+def alt():
+    
+    Menu principal
+    
+    while True:
+        printMenu()
+        inputs = input('Seleccione una opción para continuar\n>')
 
+        if int(inputs[0]) == 1:
+            print("\nInicializando....")
+            # cont es el controlador que se usará de acá en adelante
+            cont = controller.init()
+
+        elif int(inputs[0]) == 2:
+            print("\nCargando información de accidentes....")
+            controller.loadData(cont, accidentsfile)
+            print('\nAccidentes cargados: ' + str(controller.accidentsSize(cont)))
+            print('Altura del arbol: ' + str(controller.indexHeight(cont)))
+            print('Elementos en el arbol: ' + str(controller.indexSize(cont)))
+            print('Menor Llave: ' + str(controller.minKey(cont)))
+            print('Mayor Llave: ' + str(controller.maxKey(cont)))
+
+        elif int(inputs[0]) == 3:
+            initialDate = input("\nIngrese la fecha (YYYY-MM-DD): ")
+            print("\nBuscando accidentes de " + initialDate + "....")
+            severity1 = int(controller.getAccidentsBySeverity(cont, initialDate, '1'))
+            severity2 = int(controller.getAccidentsBySeverity(cont, initialDate, '2'))
+            severity3 = int(controller.getAccidentsBySeverity(cont, initialDate, '3'))
+            severity4 = int(controller.getAccidentsBySeverity(cont, initialDate, '4'))
+            totalseverities = severity1+severity2+severity3+severity4
+            print("\nEn la fecha " + initialDate + " hubo " + str(totalseverities) + " accidentes. "
+            "Hubo " + str(severity1) + " de severidad 1, " + str(severity2) + " de severidad 2, " + str(severity3) + " de severidad 3, " + str(severity4) +" de severidad 4. ")
+        else:
+            pass
 
 """
-Menu principal
-"""
-while True:
-    printMenu()
-    inputs = input('Seleccione una opción para continuar\n>')
-
-    if int(inputs[0]) == 1:
-        print("\nInicializando....")
-        # cont es el controlador que se usará de acá en adelante
-        cont = controller.init()
-
-    elif int(inputs[0]) == 2:
-        print("\nCargando información de accidentes....")
-        controller.loadData(cont, accidentsfile)
-        print('\nAccidentes cargados: ' + str(controller.accidentsSize(cont)))
-        print('Altura del arbol: ' + str(controller.indexHeight(cont)))
-        print('Elementos en el arbol: ' + str(controller.indexSize(cont)))
-        print('Menor Llave: ' + str(controller.minKey(cont)))
-        print('Mayor Llave: ' + str(controller.maxKey(cont)))
-
-    elif int(inputs[0]) == 3:
-        initialDate = input("\nIngrese la fecha (YYYY-MM-DD): ")
-        print("\nBuscando accidentes de " + initialDate + "....")
-        severity1 = int(controller.getAccidentsBySeverity(cont, initialDate, '1'))
-        severity2 = int(controller.getAccidentsBySeverity(cont, initialDate, '2'))
-        severity3 = int(controller.getAccidentsBySeverity(cont, initialDate, '3'))
-        severity4 = int(controller.getAccidentsBySeverity(cont, initialDate, '4'))
-        totalseverities = severity1+severity2+severity3+severity4
-        print("\nEn la fecha " + initialDate + " hubo " + str(totalseverities) + " accidentes. "
-        "Hubo " + str(severity1) + " de severidad 1, " + str(severity2) + " de severidad 2, " + str(severity3) + " de severidad 3, " + str(severity4) +" de severidad 4. ")
-    else:
-        sys.exit(0)
-sys.exit(0)
-
-crimefile = 'crime-utf8.csv'
-
 # ___________________________________________________
-#  Menu principal
+#  Init Function
 # ___________________________________________________
 
+def ejecutarAccidentesFecha()->None:
+    initialDate = input("\nIngrese la fecha (YYYY-MM-DD): ")
+    print("\nBuscando accidentes de " + initialDate + "....")
+
+
+
+# ___________________________________________________
+#  Main Function
+# ___________________________________________________
+
+def main():
+    """
+    Método principal del programa, se encarga de manejar todos los metodos adicionales creados
+        Parametros: 
+            None
+        Returna: 
+            None 
+    """
+    dataReady = False
+    dataBase = None
+
+    while True:
+        mainMenu() #imprimir el menu de opciones en consola
+        inputs = input('Seleccione una opción para continuar\n') #leer opción ingresada
+        
+        if len(inputs)>0 and (dataReady or int(inputs[0])<=1):
+            if int(inputs[0]) == 1:  #opcion 1
+                del dataBase
+                dataBase = controller.loadData(accidentsfile)
+                dataReady = True
+
+            elif int(inputs[0]) == 2:  #opcion 2
+                ejecutarAccidentesFecha()
+                
+            elif int(inputs[0])==0: #opcion 0, salir
+                sys.exit(0)
+                
+        else:
+            print("Porfavor, cargue datos")
+
+if __name__ == "__main__":
+    main()

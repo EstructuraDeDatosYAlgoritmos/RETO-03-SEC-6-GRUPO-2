@@ -22,6 +22,7 @@
 
 import config as cf
 from App import model
+from time import process_time as crono
 import datetime
 import csv
 
@@ -33,29 +34,57 @@ del modelo en una sola respuesta.  Esta responsabilidad
 recae sobre el controlador.
 """
 
+
+
+# ___________________________________________________
+#  Constantes
+# ___________________________________________________
+DEV = 1000000000
 # ___________________________________________________
 #  Inicializacion del catalogo
 # ___________________________________________________
 
 
 def init():
-   
-    analyzer = model.newAnalyzer()
-    return analyzer
+    dataBase = model.newDataBase()
+    return dataBase
 
 
 # ___________________________________________________
 #  Funciones para la carga de datos y almacenamiento
 #  de datos en los modelos
 # ___________________________________________________
-def loadData(analyzer, accidentsfile):
+def loadData(accidentsFile):
     
-    accidentsfile = cf.data_dir + accidentsfile
-    input_file = csv.DictReader(open(accidentsfile, encoding="utf-8"),
-                                delimiter=",")
-    for accident in input_file:
-        model.addAccident(analyzer, accident)
-    return analyzer
+    data = csv.DictReader(open(accidentsFile, encoding="utf-8"),delimiter=",")
+    for accident in data:
+        model.updateDateIndex(dataBase,accident)
+    return dataBase
+
+def loadData (data_link, sep=","):
+    
+    accidentsFile = cf.data_dir + data_link
+    dataBase = init()
+
+    print("Cargando archivo ....")
+    
+    startCrono = crono()  #tiempo inicial 
+    loadCSVFiles(accidentsFile,dataBase,sep)
+    stopCrono = crono()  #tiempo final
+    print("Tiempo de ejecución ", stopCrono - startCrono, " segundos")
+    
+def loadCSVFiles(link, dataBase, sep=";"):
+    dialect = csv.excel()
+    dialect.delimiter = sep
+    with open(link, encoding="utf-8-sig") as csvfile1:
+        buffer = csv.DictReader(csvfile1, dialect=dialect)
+        cont = 0
+        for accident in buffer:
+            cont += 1
+            model.updateDataBase(dataBase,accident)
+            if cont == DEV:
+                break
+        print(cont)
 
 # ___________________________________________________
 #  Funciones para consultas

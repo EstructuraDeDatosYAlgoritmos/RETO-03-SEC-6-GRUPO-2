@@ -31,92 +31,158 @@ assert config
 En este archivo definimos los TADs que vamos a usar,
 es decir contiene los modelos con los datos en memoria
 """
-def newAnalyzer():
+
+# ==============================
+# Funciones Estructurales
+# ==============================
+
+def newDataBase():
     """ Inicializa el analizador
     Crea una lista vacia para guardar todos los accidentes
-    Se crean indices (Maps) por los siguientes criterios:
-    -Fechas
-    Retorna el analizador inicializado.
+        Estructura:
+            accidents(Map): Corresponde a la informacion completa de los accidentes
+            dateIndex(OrderedMap): Corresponde a un indice con los ids de los accidentes organizados por fecha
+                severity(Map): Contiene la informacion dividida por severidad
+                    timeIndex(OrderedMap): Organiza la informacion por hora
+                        idList(List): Contiene los Ids 
+
+        Retorna:
+            dict: Corresponde al analizador inicializado.
     """
-    analyzer = {'accidents': None,
-                'dateIndex': None
+    dataBase = {
+                'accidents': m.newMap(2,loadfactor=1.0,comparefunction=compareIds),
+                'dateIndex': om.newMap('RBT',compareDates)
                 }
 
-    analyzer['accidents'] = lt.newList('SINGLE_LINKED', compareIds)
-    analyzer['dateIndex'] = om.newMap(omaptype='RBT',
-                                      comparefunction=compareDates)
-    return analyzer
+    return dataBase
 
-
-# Funciones para agregar informacion al catalogo
-
-
-def addAccident(analyzer, accident):
+def newSeverity()->dict:
     """
+    Crea una entrada en el indice de fechas.
+        parametros:
+            None
+        retorna:
+            Map: Esta entrada divide los accidentes por severidad.
     """
-    lt.addLast(analyzer['accidents'], accident)
-    updateDateIndex(analyzer['dateIndex'], accident)
-    return analyzer
+
+    dateEntry = m.newMap(4,7,'CHAINING',1.0,compareSeverities)
+    return dateEntry
+
+def newTimeIndex()->dict: 
+    """
+    Crea un indice de tiempo.
+        parametros:
+            None
+        retorna:
+            OrderMap: Esta entrada organiza los accidentes segun su hora inicial
+    """
+
+    timeIndex = om.newMap('RBT',compareTime)
+    return timeIndex
+
+def newIDList()->dict:
+    """
+    Crea una lista con los ids de los accidentes
+        parametros:
+            None
+        retorna:
+            List: Contiene los ids de los accidentes
+    """
+    idList = lt.newList('SINGLE_LINKED', compareIds)
+    return idList
 
 
-def updateDateIndex(map, accident):
+# ==============================
+# Funciones de Actualizacion
+# ==============================
+
+
+def updateDataBase(dataBase:dict, accident:dict)->None:
+    """
+        Añade un accidente a la base de datos
+    Parametros:
+        dataBase(dict): Representa a la base de datos
+        accident(dict): Contiene los detalles acerca de un unico accidente
+    Retorna:
+        None
+    """
+    updateAccidents(dataBase['accidents'], accident)
+    updateDateIndex(dataBase['dateIndex'], accident)
+   
+def updateAccidents(accidentsMap:dict, accident:dict):
+    m.put(accidentsMap,accident['ID'], accident)
+
+def updateDateIndex(dateMap:dict, accident:dict)->None:
+    """
+    Añade la informacion del accidente al indice de fechas de la base de datos
+        parametros: 
+            map(dict): Es el indice de fechas de la base de datos
+            accident(dict): Contiene los detalles de un unico accidente
+        Retorno:
+            None
+    """
    
     start_time = accident['Start_Time']
-    accidentdate = datetime.datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
-    entry = om.get(map, accidentdate.date())
-    if entry is None:
-        datentry = newDataEntry(accident)
-        om.put(map, accidentdate.date(), datentry)
+    accidentDate = datetime.datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+
+    print(dateMap)
+
+    entryExist = om.contains(dateMap,accidentDate.date())
+
+    if entryExist:
+        dateEntry = om.get(dateMap,accidentDate.date())
+        dateEntry = me.getValue(dateMap,dateEntry)
     else:
-        datentry = me.getValue(entry)
-    addDateIndex(datentry, accident)
-    return map
+        dateEntry = newSeverity()
+        om.put(dateMap, accidentDate.date(), dateEntry)
 
+    updateSeverity(dateEntry, accident, accidentDate)
 
-def addDateIndex(datentry, accident):
+def updateSeverity(dateEntry:dict, accident:dict, accidentDate: datetime)->None:
     """
-    Actualiza un indice de tipo de accidentes.  Este indice tiene una lista
-    de accidentes y una tabla de hash cuya llave es el tipo de accidentes y
-    el valor es una lista con los accidentes de dicho tipo en la fecha que
-    se está consultando (dada por el nodo del arbol).
+    Actualiza las entradas Severity de la base de datos
+        parametros:
+            dateEntry(Map): Es la entrada que contiene los datos de severidad
+            accident(dict): Contiene toda la informacion del accidente
+        retorna:
+            None
     """
-    lst = datentry['lstaccidents']
-    lt.addLast(lst, accident)
-    severityIndex = datentry['severityIndex']
-    offentry = m.get(severityIndex, accident['Severity'])
-    if (offentry is None):
-        entry = newSeverityEntry(accident['Severity'], accident)
-        lt.addLast(entry['lstseverities'], accident)
-        m.put(severityIndex, accident['Severity'], entry)
+    severity = accident['Severity']
+
+    entryExist = m.contains(dateEntry, severity)
+    if entryExist:
+        severityEntry = m.get(dateEntry, severity)
+        severityEntry = me.getValue(severityEntry)
     else:
-        entry = me.getValue(offentry)
-        lt.addLast(entry['lstseverities'], accident)
-    return datentry
+        severityEntry = newTimeIndex()
+        m.put(dateEntry, severity, severityEntry)
+
+    updateTimeIndex(severityEntry,accident,accidentDate)
+
+     
 
 
-def newDataEntry(accident):
+def updateTimeIndex(severityEntry:dict, accident:dict,accidentDate: datetime)->None:
     """
-    Crea una entrada en el indice por fechas, es decir en el arbol
-    binario.
-    """
-    entry = {'severityIndex': None, 'lstaccidents': None}
-    entry['severityIndex'] = m.newMap(numelements=30,
-                                     maptype='PROBING',
-                                     comparefunction=compareSeverities)
-    entry['lstaccidents'] = lt.newList('SINGLE_LINKED', compareDates)
-    return entry
+    Actualiza las entradas del indice Time.
+        parametros:
+            severityEntry(OrderedMap): Contiene un TimeIndex
+            accident(dict): Contiene la informacion acerca del accidente
 
-
-def newSeverityEntry(severitygrp, accident):
     """
-    Crea una entrada en el indice por tipo de crimen, es decir en
-    la tabla de hash, que se encuentra en cada nodo del arbol.
-    """
-    ofentry = {'severity': None, 'lstseverities': None}
-    ofentry['severity'] = severitygrp
-    ofentry['lstseverities'] = lt.newList('SINGLELINKED', compareSeverities)
-    return ofentry
+    id = accident['ID']
+    accidentTime = blockTime(accidentDate.time())
 
+    entryExist = om.contains(severityEntry,accidentTime)
+    if entryExist:
+        timeEntry = om.get(severityEntry, accidentTime)
+        timeEntry = me.getValue(timeEntry)
+    else:
+        timeEntry = newIDList()
+        om.put(severityEntry,accidentTime,timeEntry)
+    
+    lt.addFirst(timeEntry,id)
+        
 
 # ==============================
 # Funciones de consulta
@@ -146,6 +212,7 @@ def minKey(analyzer):
 def maxKey(analyzer):
    
     return om.maxKey(analyzer['dateIndex'])
+    
 
 
 def getAccidentsBySeverity(analyzer, initialDate, severity):
@@ -166,7 +233,7 @@ def getAccidentsBySeverity(analyzer, initialDate, severity):
 
 def compareIds(id1, id2):
     """
-    Compara dos crimenes
+    Compara dos accidentes
     """
     if (id1 == id2):
         return 0
@@ -185,6 +252,14 @@ def compareDates(date1, date2):
     else:
         return -1
 
+def compareTime(time1, time2):
+    if (time1 == time2):
+        return 0
+    elif (time1 > time2):
+        return 1
+    else:
+        return -1
+
 
 def compareSeverities(severity1, severity2):
    
@@ -197,4 +272,22 @@ def compareSeverities(severity1, severity2):
         return -1
  
 
+# ==============================
+# Funciones auxiliares
+# ==============================
+
+def blockTime(accidentTime: datetime.time) -> datetime.time:
+    """
+    Define una entrada horaria en un bloque de media hora.
+        Nota:
+            Cada bloque abarca desde la hora retornada hasta 30 minutos despues
+        parametros:
+            accidentTime(Time): contiene la hora inicial del accidente
+        retorna:
+            time: Contiene la hora inicial del bloque al que fue asignado
+    """
+    if accidentTime.minute < 30:
+        return datetime.time(hour=accidentTime.hour,minute=0)
+    else:
+        return datetime.time(hour=accidentTime.hour,minute=30)
 

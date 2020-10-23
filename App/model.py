@@ -50,7 +50,7 @@ def newDataBase():
             dict: Corresponde al analizador inicializado.
     """
     dataBase = {
-                'accidents': m.newMap(2,loadfactor=1.0,comparefunction=compareIds),
+                'accidents': m.newMap(878756,109345121,'CHAINING',1.5,compareIds),
                 'dateIndex': om.newMap('RBT',compareDates)
                 }
 
@@ -65,7 +65,7 @@ def newSeverity()->dict:
             Map: Esta entrada divide los accidentes por severidad.
     """
 
-    dateEntry = m.newMap(4,7,'CHAINING',1.0,compareSeverities)
+    dateEntry = m.newMap(4,7,'CHAINING',1.5,compareSeverities)
     return dateEntry
 
 def newTimeIndex()->dict: 
@@ -88,7 +88,7 @@ def newIDList()->dict:
         retorna:
             List: Contiene los ids de los accidentes
     """
-    idList = lt.newList('SINGLE_LINKED', compareIds)
+    idList = lt.newList('ARRAY_LIST', compareIds)
     return idList
 
 
@@ -125,13 +125,11 @@ def updateDateIndex(dateMap:dict, accident:dict)->None:
     start_time = accident['Start_Time']
     accidentDate = datetime.datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
 
-    print(dateMap)
-
     entryExist = om.contains(dateMap,accidentDate.date())
 
     if entryExist:
         dateEntry = om.get(dateMap,accidentDate.date())
-        dateEntry = me.getValue(dateMap,dateEntry)
+        dateEntry = me.getValue(dateEntry)
     else:
         dateEntry = newSeverity()
         om.put(dateMap, accidentDate.date(), dateEntry)
@@ -235,6 +233,8 @@ def compareIds(id1, id2):
     """
     Compara dos accidentes
     """
+    id2 = me.getKey(id2)
+    
     if (id1 == id2):
         return 0
     elif id1 > id2:
@@ -244,7 +244,6 @@ def compareIds(id1, id2):
 
 
 def compareDates(date1, date2):
-   
     if (date1 == date2):
         return 0
     elif (date1 > date2):
@@ -262,11 +261,10 @@ def compareTime(time1, time2):
 
 
 def compareSeverities(severity1, severity2):
-   
-    severity = me.getKey(severity2)
-    if (severity1 == severity):
+    severity2 = me.getKey(severity2)
+    if (severity1 == severity2):
         return 0
-    elif (severity1 > severity):
+    elif (severity1 > severity2):
         return 1
     else:
         return -1

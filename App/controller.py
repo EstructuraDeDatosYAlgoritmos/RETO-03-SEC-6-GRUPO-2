@@ -39,7 +39,7 @@ recae sobre el controlador.
 # ___________________________________________________
 #  Constantes
 # ___________________________________________________
-DEV = 1000000000
+DEV = 100000
 # ___________________________________________________
 #  Inicializacion del catalogo
 # ___________________________________________________
@@ -54,12 +54,6 @@ def init():
 #  Funciones para la carga de datos y almacenamiento
 #  de datos en los modelos
 # ___________________________________________________
-def loadData(accidentsFile):
-    
-    data = csv.DictReader(open(accidentsFile, encoding="utf-8"),delimiter=",")
-    for accident in data:
-        model.updateDateIndex(dataBase,accident)
-    return dataBase
 
 def loadData (data_link, sep=","):
     
@@ -76,14 +70,14 @@ def loadData (data_link, sep=","):
 def loadCSVFiles(link, dataBase, sep=";"):
     dialect = csv.excel()
     dialect.delimiter = sep
-    with open(link, encoding="utf-8-sig") as csvfile1:
-        buffer = csv.DictReader(csvfile1, dialect=dialect)
+    with open(link, encoding="utf-8") as csvfile:
+        buffer = csv.DictReader(csvfile, dialect=dialect)
         cont = 0
         for accident in buffer:
             cont += 1
             model.updateDataBase(dataBase,accident)
             if cont == DEV:
-                break
+                pass
         print(cont)
 
 # ___________________________________________________

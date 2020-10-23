@@ -23,6 +23,10 @@
 import config as cf
 from App import model
 from time import process_time as crono
+from DISClib.ADT import list as lt
+from DISClib.ADT import orderedmap as om
+from DISClib.DataStructures import mapentry as me
+from DISClib.ADT import map as m
 import datetime
 import csv
 
@@ -39,7 +43,7 @@ recae sobre el controlador.
 # ___________________________________________________
 #  Constantes
 # ___________________________________________________
-DEV = 100000
+DEV = 10000
 # ___________________________________________________
 #  Inicializacion del catalogo
 # ___________________________________________________
@@ -67,6 +71,8 @@ def loadData (data_link, sep=","):
     stopCrono = crono()  #tiempo final
     print("Tiempo de ejecución ", stopCrono - startCrono, " segundos")
     
+    return dataBase
+    
 def loadCSVFiles(link, dataBase, sep=";"):
     dialect = csv.excel()
     dialect.delimiter = sep
@@ -77,7 +83,7 @@ def loadCSVFiles(link, dataBase, sep=";"):
             cont += 1
             model.updateDataBase(dataBase,accident)
             if cont == DEV:
-                pass
+                break
         print(cont)
 
 # ___________________________________________________
@@ -118,6 +124,24 @@ def maxKey(analyzer):
     return model.maxKey(analyzer)
   
 
-def getAccidentsBySeverity(analyzer, initialDate, severity):
+def getSeverityByDate(dataBase, initialDate):
     initialDate = datetime.datetime.strptime(initialDate, '%Y-%m-%d')
-    return model.getAccidentsBySeverity(analyzer, initialDate.date(), severity)
+
+    data = model.getSeverityByDate(dataBase,initialDate.date())
+    index = m.keySet(data['severityIndex'])
+    count = lt.size(index)
+    
+    result = lt.newList()
+    lt.addLast(result,data['size'])
+    while count > 0:
+        count -= 1
+        key = lt.removeFirst(index)
+        if key is not None:
+            num = m.get(data['severityIndex'],key)
+            num = me.getValue(num)
+    
+            lt.addLast(result,(key,num))
+    return result
+
+
+

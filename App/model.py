@@ -30,6 +30,7 @@ assert config
 """
 En este archivo definimos los TADs que vamos a usar,
 es decir contiene los modelos con los datos en memoria
+
 """
 
 # ==============================
@@ -50,8 +51,9 @@ def newDataBase():
             dict: Corresponde al analizador inicializado.
     """
     dataBase = {
-                'accidents': m.newMap(878756,109345121,'CHAINING',1.5,compareIds),
-                'dateIndex': om.newMap('RBT',compareDates)
+                'accidents': m.newMap(878756,878777,'CHAINING',1.5,compareIds),
+                'dateIndex': om.newMap('RBT',compareDates),
+                'size': 0
                 }
 
     return dataBase
@@ -65,7 +67,10 @@ def newSeverity()->dict:
             Map: Esta entrada divide los accidentes por severidad.
     """
 
-    dateEntry = m.newMap(4,7,'CHAINING',1.5,compareSeverities)
+    dateEntry = {
+        'severityIndex':m.newMap(4,7,'CHAINING',1.5,compareSeverities),
+        'size':0
+        }
     return dateEntry
 
 def newTimeIndex()->dict: 
@@ -77,7 +82,10 @@ def newTimeIndex()->dict:
             OrderMap: Esta entrada organiza los accidentes segun su hora inicial
     """
 
-    timeIndex = om.newMap('RBT',compareTime)
+    timeIndex = {
+        'timeIndex':om.newMap('RBT',compareTime),
+        'size': 0
+        }
     return timeIndex
 
 def newIDList()->dict:
@@ -88,7 +96,10 @@ def newIDList()->dict:
         retorna:
             List: Contiene los ids de los accidentes
     """
-    idList = lt.newList('ARRAY_LIST', compareIds)
+    idList = {
+        'idList': lt.newList('ARRAY_LIST', compareIds),
+        'size': 0
+        }
     return idList
 
 
@@ -106,11 +117,13 @@ def updateDataBase(dataBase:dict, accident:dict)->None:
     Retorna:
         None
     """
-    updateAccidents(dataBase['accidents'], accident)
+    updateAccidents(dataBase, accident)
     updateDateIndex(dataBase['dateIndex'], accident)
    
-def updateAccidents(accidentsMap:dict, accident:dict):
-    m.put(accidentsMap,accident['ID'], accident)
+def updateAccidents(dataBase:dict, accident:dict):
+    m.put(dataBase['accidents'],accident['ID'], accident)
+    dataBase['size'] += 1
+
 
 def updateDateIndex(dateMap:dict, accident:dict)->None:
     """
@@ -134,7 +147,9 @@ def updateDateIndex(dateMap:dict, accident:dict)->None:
         dateEntry = newSeverity()
         om.put(dateMap, accidentDate.date(), dateEntry)
 
-    updateSeverity(dateEntry, accident, accidentDate)
+    updateSeverity(dateEntry['severityIndex'], accident, accidentDate)
+    dateEntry['size'] += 1
+
 
 def updateSeverity(dateEntry:dict, accident:dict, accidentDate: datetime)->None:
     """
@@ -155,12 +170,12 @@ def updateSeverity(dateEntry:dict, accident:dict, accidentDate: datetime)->None:
         severityEntry = newTimeIndex()
         m.put(dateEntry, severity, severityEntry)
 
-    updateTimeIndex(severityEntry,accident,accidentDate)
-
+    updateTimeIndex(severityEntry['timeIndex'],accident,accidentDate)
+    severityEntry['size'] += 1
      
 
 
-def updateTimeIndex(severityEntry:dict, accident:dict,accidentDate: datetime)->None:
+def updateTimeIndex(severityEntry:dict, accident:dict,accidentDate: datetime, )->None:
     """
     Actualiza las entradas del indice Time.
         parametros:
@@ -179,7 +194,8 @@ def updateTimeIndex(severityEntry:dict, accident:dict,accidentDate: datetime)->N
         timeEntry = newIDList()
         om.put(severityEntry,accidentTime,timeEntry)
     
-    lt.addFirst(timeEntry,id)
+    lt.addFirst(timeEntry['idList'],id)
+    timeEntry['size'] += 1
         
 
 # ==============================
@@ -211,16 +227,6 @@ def maxKey(analyzer):
    
     return om.maxKey(analyzer['dateIndex'])
     
-
-
-def getAccidentsBySeverity(analyzer, initialDate, severity):
-    accidentdate = om.get(analyzer['dateIndex'], initialDate)
-    if accidentdate['key'] is not None:
-        severitymap = me.getValue(accidentdate)['severityIndex']
-        numseverities = m.get(severitymap, severity)
-        if numseverities is not None:
-            return m.size(me.getValue(numseverities)['lstseverities'])
-        return 0
 
     
 
@@ -269,6 +275,10 @@ def compareSeverities(severity1, severity2):
     else:
         return -1
  
+def getSeverityByDate (dataBase, date):
+    data = getDataSeverity(getIndex(dataBase,date),dataBase)
+    return data
+
 
 # ==============================
 # Funciones auxiliares
@@ -289,3 +299,78 @@ def blockTime(accidentTime: datetime.time) -> datetime.time:
     else:
         return datetime.time(hour=accidentTime.hour,minute=30)
 
+def getIndex(dataBase, initialDate, finalDate=None):
+    indexDate = dataBase['dateIndex']
+    index = lt.newList()
+    if finalDate is None:
+        indexExist = om.contains(indexDate,initialDate)
+        if indexExist:
+            element = om.get(indexDate,initialDate)
+            element = me.getValue(element)
+            lt.addFirst(index,element)
+    else:
+        pass
+
+    return index
+
+def getDataSeverity (index, dataBase):
+    severityMap = newSeverity()
+    entry1 = lt.size(index)
+    while entry1 > 0:
+        entry1 -= 1
+
+        dateEntry = lt.removeFirst(index)
+        dateKeys = m.keySet(dateEntry['severityIndex'])
+        severityMap['size'] += dateEntry['size']
+        
+        entry2 = lt.size(dateKeys)
+        while entry2 > 0:
+            entry2 -= 1
+            severityKey = lt.removeFirst(dateKeys)
+            if severityKey is not None:
+                severityEntry = m.get(dateEntry['severityIndex'],severityKey)
+                severityEntry = me.getValue(severityEntry)
+                
+                m.put(severityMap['severityIndex'],severityKey, severityEntry['size'])
+            
+    return severityMap
+                
+def getDataTime (timeLo, timeHi, dataBase):
+    severityMap = newSeverity()
+    index = om.valueSet(dataBase['dateIndex'])
+    entry1 = lt.size(index)
+    while entry1 > 0:
+        entry1 -= 1
+
+        dateEntry = lt.removeFirst(index)
+        dateKeys = m.keySet(dateEntry)
+        
+        entry2 = lt.size(dateKeys)
+        while entry2 > 0:
+            entry2 -= 1
+            severityKey = lt.removeFirst(dateKeys)
+            severityEntry = m.get(dateEntry,severityKey)
+            severityEntry = me.getValue(severityEntry)
+            severityEntry = om.values(dateEntry,timeLo,timeHi)
+            
+            entry3 = lt.size(severityEntry)
+            while entry3 > 0:
+                entry3 -= 1
+                timeEntry = lt.removeFirst(severityEntry)
+                entry4 = lt.size(timeEntry)
+                while entry4 > 0:
+                    entry4 -= 1
+                    idEntry = lt.removeFirst(timeEntry)
+                    idEntry = getAccident(dataBase, idEntry)
+
+                    lt.addFirst(severityList,idEntry)
+                    
+            m.put(severityMap, severityKey, severityList)
+    return severityMap
+                
+
+
+def getAccident(dataBase, id):
+    accident = m.get(dataBase['accidents'], id)
+    accident = me.getValue(accident)
+    return accident

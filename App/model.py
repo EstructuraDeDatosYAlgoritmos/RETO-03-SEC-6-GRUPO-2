@@ -222,7 +222,35 @@ def getAccidentsBySeverity(analyzer, initialDate, severity):
             return m.size(me.getValue(numseverities)['lstseverities'])
         return 0
 
-    
+def getAccidentsByRange(analyzer, initialDate, finalDate):
+    lst = om.keys(analyzer['dateIndex'], initialDate, finalDate)  
+    c1 = 0
+    c2 = 0
+    c3 = 0
+    c4 = 0
+    for a in range(1,lt.size(lst)+1):
+        date =lt.getElement(lst, a)
+        c1+= int(getAccidentsBySeverity(analyzer, date, '1'))
+        c2+= int(getAccidentsBySeverity(analyzer, date, '1'))
+        c3+= int(getAccidentsBySeverity(analyzer, date, '1'))
+        c4+= int(getAccidentsBySeverity(analyzer, date, '1'))
+
+    categories = c1
+    severity = '1'
+    totalaccidents = c1 + c2 + c3 + c4
+    if totalaccidents == 0:
+        severity = 'Ninguno'
+    else:
+        if c2> categories:
+            categories = c2
+            severity = '2'
+        if c3> categories:
+            categories = c3
+            severity = '3'
+        if c4> categories:
+            categories = c4
+            severity = '4'
+    return totalaccidents, severity   
 
 # ==============================
 # Funciones de Comparacion

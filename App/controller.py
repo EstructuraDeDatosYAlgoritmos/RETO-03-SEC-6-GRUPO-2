@@ -121,3 +121,8 @@ def maxKey(analyzer):
 def getAccidentsBySeverity(analyzer, initialDate, severity):
     initialDate = datetime.datetime.strptime(initialDate, '%Y-%m-%d')
     return model.getAccidentsBySeverity(analyzer, initialDate.date(), severity)
+    
+def getAccidentsByRangeofDates(analyzer, initialDate, finalDate):
+    initialDate = datetime.datetime.strptime(initialDate, '%Y-%m-%d')
+    finalDate = datetime.datetime.strptime(finalDate, '%Y-%m-%d')
+    return model.getAccidentsByRange(analyzer, initialDate.date(), finalDate.date() )

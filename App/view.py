@@ -54,46 +54,11 @@ def mainMenu()->None:
     print("Bienvenido")
     print("1- Cargar información de accidentes")
     print("2- Consultar los accidentes en una fecha dada")
-    print("3- Requerimiento 2")
+    print("3- Consultar los accidentes anteriores a una fecha dada")
+    print("6- Revisar los accidentes entre un grupo de horas")
     print("0- Salir")
     print("*******************************************")
-"""
-def alt():
-    
-    Menu principal
-    
-    while True:
-        printMenu()
-        inputs = input('Seleccione una opción para continuar\n>')
 
-        if int(inputs[0]) == 1:
-            print("\nInicializando....")
-            # cont es el controlador que se usará de acá en adelante
-            cont = controller.init()
-
-        elif int(inputs[0]) == 2:
-            print("\nCargando información de accidentes....")
-            controller.loadData(cont, accidentsfile)
-            print('\nAccidentes cargados: ' + str(controller.accidentsSize(cont)))
-            print('Altura del arbol: ' + str(controller.indexHeight(cont)))
-            print('Elementos en el arbol: ' + str(controller.indexSize(cont)))
-            print('Menor Llave: ' + str(controller.minKey(cont)))
-            print('Mayor Llave: ' + str(controller.maxKey(cont)))
-
-        elif int(inputs[0]) == 3:
-            initialDate = input("\nIngrese la fecha (YYYY-MM-DD): ")
-            print("\nBuscando accidentes de " + initialDate + "....")
-            severity1 = int(controller.getAccidentsBySeverity(cont, initialDate, '1'))
-            severity2 = int(controller.getAccidentsBySeverity(cont, initialDate, '2'))
-            severity3 = int(controller.getAccidentsBySeverity(cont, initialDate, '3'))
-            severity4 = int(controller.getAccidentsBySeverity(cont, initialDate, '4'))
-            totalseverities = severity1+severity2+severity3+severity4
-            print("\nEn la fecha " + initialDate + " hubo " + str(totalseverities) + " accidentes. "
-            "Hubo " + str(severity1) + " de severidad 1, " + str(severity2) + " de severidad 2, " + str(severity3) + " de severidad 3, " + str(severity4) +" de severidad 4. ")
-        else:
-            pass
-
-"""
 # ___________________________________________________
 #  Init Function
 # ___________________________________________________
@@ -109,7 +74,46 @@ def ejecutarSeverityByDate(dataBase)->None:
         count -= 1
         result = lt.removeFirst(data)
         if result is not None:
+            if result[0] != 'max':
+                print(f"\tDe severidad {result[0]} se encontraron {result[1]} accidentes")
+            else:
+                max = result[1]
+
+    print(f"con un total de {total} accidentes")
+        
+def ejecutarSeverityByPreDate(dataBase)->None:
+    initialDate = input("\nIngrese la fecha (YYYY-MM-DD): ")
+    print("\nBuscando accidentes antes de " + initialDate + "....")
+    print("Los resultados son:")
+    data = controller.getSeverityByPreDate(dataBase,initialDate)
+    count = len(data)
+    total = lt.removeFirst(data)
+    while count > 0:
+        count -= 1
+        result = lt.removeFirst(data)
+        if result is not None:
+            if result[0] != 'max':
+                print(f"\tDe severidad {result[0]} se encontraron {result[1]} accidentes")
+            else:
+                max = result[1]
+
+    print(f"con un total de {total} accidentes")
+    print(f'el dia con mas accidentes fue {max}')
+        
+def ejecutarSeverityByTime(dataBase)->None:
+    timeLo = input("\nIngrese la hora inicial ('HH:MM:SS'): ")
+    timeHi = input("\nIngrese la hora final ('HH:MM:SS'): ")
+    print(f"\nBuscando accidentes entre las {timeLo} y las {timeHi} ....")
+    print("Los resultados son:")
+    data = controller.getSeverityByTime(dataBase,timeLo, timeHi)
+    count = len(data)
+    total = lt.removeFirst(data)
+    while count > 0:
+        count -= 1
+        result = lt.removeFirst(data)
+        if result is not None:
             print(f"\tDe severidad {result[0]} se encontraron {result[1]} accidentes")
+            
 
     print(f"con un total de {total} accidentes")
         
@@ -145,6 +149,10 @@ def main():
 
             elif int(inputs[0]) == 2:  #opcion 2
                 ejecutarSeverityByDate(dataBase)
+            elif int(inputs[0]) == 3:  #opcion 2
+                ejecutarSeverityByPreDate(dataBase)
+            elif int(inputs[0]) == 6:  #opcion 2
+                ejecutarSeverityByTime(dataBase)
                 
             elif int(inputs[0])==0: #opcion 0, salir
                 sys.exit(0)

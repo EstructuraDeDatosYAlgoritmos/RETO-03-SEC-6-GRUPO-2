@@ -143,5 +143,62 @@ def getSeverityByDate(dataBase, initialDate):
             lt.addLast(result,(key,num))
     return result
 
+def getSeverityByDate(dataBase, initialDate):
+    initialDate = datetime.datetime.strptime(initialDate, '%Y-%m-%d')
+
+    data = model.getSeverityByDate(dataBase,initialDate.date())
+    index = m.keySet(data['severityIndex'])
+    count = lt.size(index)
+    
+    result = lt.newList()
+    lt.addLast(result,data['size'])
+    while count > 0:
+        count -= 1
+        key = lt.removeFirst(index)
+        if key is not None:
+            num = m.get(data['severityIndex'],key)
+            num = me.getValue(num)
+    
+            lt.addLast(result,(key,num))
+    return result
+def getSeverityByPreDate(dataBase, initialDate):
+    initialDate = datetime.datetime.strptime(initialDate, '%Y-%m-%d')
+
+    data = model.getSeverityByPreDate(dataBase,initialDate.date())
+    index = m.keySet(data['severityIndex'])
+    count = lt.size(index)
+    
+    result = lt.newList()
+    lt.addLast(result,data['size'])
+    while count > 0:
+        count -= 1
+        key = lt.removeFirst(index)
+        if key is not None:
+            num = m.get(data['severityIndex'],key)
+            num = me.getValue(num)
+    
+            lt.addLast(result,(key,num))
+    return result
+
+def getSeverityByTime(dataBase, timeLo, timeHi):
+    timeLo = datetime.datetime.strptime(timeLo, '%H:%M:%S').time()
+    timeHi = datetime.datetime.strptime(timeHi, '%H:%M:%S').time()
+    print(timeLo)
+
+    data = model.getSeverityByTime(dataBase,timeLo, timeHi)
+    index = m.keySet(data['severityIndex'])
+    count = lt.size(index)
+    
+    result = lt.newList()
+    lt.addLast(result,data['size'])
+    while count > 0:
+        count -= 1
+        key = lt.removeFirst(index)
+        if key is not None:
+            num = m.get(data['severityIndex'],key)
+            num = me.getValue(num)
+    
+            lt.addLast(result,(key,num))
+    return result
 
 

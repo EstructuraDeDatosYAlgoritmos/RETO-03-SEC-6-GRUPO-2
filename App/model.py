@@ -276,9 +276,19 @@ def compareSeverities(severity1, severity2):
         return -1
  
 def getSeverityByDate (dataBase, date):
-    data = getDataSeverity(getIndex(dataBase,date),dataBase)
+    data = getDataSeverity(getIndex(dataBase,date))
+    return data
+def getSeverityByPreDate (dataBase, date):
+    lo = om.minKey(dataBase['dateIndex'])
+    
+    data = getDataSeverity(getIndex(dataBase,lo,date))
     return data
 
+def getSeverityByTime (dataBase, timeLo, timeHi):
+    timeLo = blockTime(timeLo)
+    timeHi = blockTime(timeHi)
+    data = getTimeSeverity(timeLo,timeHi, dataBase)
+    return data
 
 # ==============================
 # Funciones auxiliares
@@ -306,22 +316,30 @@ def getIndex(dataBase, initialDate, finalDate=None):
         indexExist = om.contains(indexDate,initialDate)
         if indexExist:
             element = om.get(indexDate,initialDate)
-            element = me.getValue(element)
+            
             lt.addFirst(index,element)
     else:
-        pass
-
+        index = om.values(indexDate,initialDate, finalDate)
+    
     return index
 
-def getDataSeverity (index, dataBase):
+def getDataSeverity (index):
     severityMap = newSeverity()
     entry1 = lt.size(index)
     while entry1 > 0:
         entry1 -= 1
 
         dateEntry = lt.removeFirst(index)
+        date = me.getKey(dateEntry)
+        dateEntry = me.getValue(dateEntry)
         dateKeys = m.keySet(dateEntry['severityIndex'])
         severityMap['size'] += dateEntry['size']
+
+        if m.contains(severityMap['severityIndex'],'max'):
+            if m.get(severityMap['severityIndex'],'max') < dateEntry['size']:
+                m.put(severityMap['severityIndex'],'max', dateEntry['size'])
+        else:
+            m.put(severityMap['severityIndex'],'max', date)
         
         entry2 = lt.size(dateKeys)
         while entry2 > 0:
@@ -330,42 +348,59 @@ def getDataSeverity (index, dataBase):
             if severityKey is not None:
                 severityEntry = m.get(dateEntry['severityIndex'],severityKey)
                 severityEntry = me.getValue(severityEntry)
+
+                resultVal = m.contains(severityMap['severityIndex'],severityKey)
+
+                if resultVal:
+                    preValue = m.get(severityMap['severityIndex'],severityKey)
+                    preValue = me.getValue(preValue)
+                    m.put(severityMap['severityIndex'],severityKey, preValue + severityEntry['size'])
+                else:
+                    m.put(severityMap['severityIndex'],severityKey,severityEntry['size'])
                 
-                m.put(severityMap['severityIndex'],severityKey, severityEntry['size'])
+                
+        
             
     return severityMap
                 
-def getDataTime (timeLo, timeHi, dataBase):
+def getTimeSeverity (timeLo, timeHi, dataBase):
     severityMap = newSeverity()
     index = om.valueSet(dataBase['dateIndex'])
+    total = 0
     entry1 = lt.size(index)
     while entry1 > 0:
         entry1 -= 1
 
         dateEntry = lt.removeFirst(index)
-        dateKeys = m.keySet(dateEntry)
+        dateKeys = m.keySet(dateEntry['severityIndex'])
         
         entry2 = lt.size(dateKeys)
         while entry2 > 0:
             entry2 -= 1
             severityKey = lt.removeFirst(dateKeys)
-            severityEntry = m.get(dateEntry,severityKey)
+            severityEntry = m.get(dateEntry['severityIndex'],severityKey)
             severityEntry = me.getValue(severityEntry)
-            severityEntry = om.values(dateEntry,timeLo,timeHi)
+            severityEntry = om.values(severityEntry['timeIndex'],timeLo,timeHi)
             
             entry3 = lt.size(severityEntry)
             while entry3 > 0:
                 entry3 -= 1
                 timeEntry = lt.removeFirst(severityEntry)
-                entry4 = lt.size(timeEntry)
-                while entry4 > 0:
-                    entry4 -= 1
-                    idEntry = lt.removeFirst(timeEntry)
-                    idEntry = getAccident(dataBase, idEntry)
+                timeEntry = timeEntry['size']
 
-                    lt.addFirst(severityList,idEntry)
-                    
-            m.put(severityMap, severityKey, severityList)
+                total += timeEntry
+
+                resultVal = m.contains(severityMap['severityIndex'],severityKey)
+
+                if resultVal:
+                    preValue = m.get(severityMap['severityIndex'],severityKey)
+                    preValue = me.getValue(preValue)
+                    m.put(severityMap['severityIndex'],severityKey, preValue + timeEntry)
+                else:
+                    m.put(severityMap['severityIndex'],severityKey,timeEntry)
+    
+    severityMap['size'] = total 
+
     return severityMap
                 
 

@@ -38,7 +38,7 @@ operación seleccionada.
 #  Ruta a los archivos
 # ___________________________________________________
 
-accidentsfile = 'us_accidents_dis_2019.csv'
+accidentsfile = 'us_accidents_small.csv'
 
 # ___________________________________________________
 #  Menu principal
@@ -101,7 +101,16 @@ def ejecutarAccidentesFecha()->None:
     initialDate = input("\nIngrese la fecha (YYYY-MM-DD): ")
     print("\nBuscando accidentes de " + initialDate + "....")
 
-
+def ejecutarAccidentesAntesDeFecha()->None:
+    finalDate = input("\nIngrese la fecha tope (YYYY-MM-DD): ")
+    beforeTuple= controller.getAccidentsBeforeDate(controller.init(), finalDate)
+    if beforeTuple=="fecha":
+        print("\nFecha no encontrada")
+    elif beforeTuple=="formato":
+        print("\nEscriba de manera correcta la fecha")
+    else:
+        print("\nBuscando cantidad accidentes) antes de " + finalDate + "....")
+        print("\nAntes de " + finalDate + " ocurrieron " + str(beforeTuple[0]) + " y la fecha con más accidentes fue " + str(beforeTuple[1]))
 
 # ___________________________________________________
 #  Main Function
@@ -130,7 +139,10 @@ def main():
 
             elif int(inputs[0]) == 2:  #opcion 2
                 ejecutarAccidentesFecha()
-                
+            
+            elif int(inputs[0]) == 3:  #opcion 3
+                ejecutarAccidentesAntesDeFecha()    
+            
             elif int(inputs[0])==0: #opcion 0, salir
                 sys.exit(0)
                 

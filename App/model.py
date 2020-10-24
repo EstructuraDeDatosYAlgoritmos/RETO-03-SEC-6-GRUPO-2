@@ -222,7 +222,41 @@ def getAccidentsBySeverity(analyzer, initialDate, severity):
             return m.size(me.getValue(numseverities)['lstseverities'])
         return 0
 
+def getAccidentsBeforeDate(analyzer, finalDate):
+    initialDate = str(minKey(analyzer))
+    initialDate = datetime.datetime.strptime(initialDate, '%Y-%m-%d')
+    lst = om.keys(analyzer['dateIndex'], initialDate.date(), finalDate)
     
+    if initialDate.date() == finalDate:
+        return (0, "no hay fecha anterior")
+    else:
+        severity1 = 0
+        severity2 = 0
+        severity3 = 0
+        severity4 = 0
+        mostAccidentsDate = {'date': None,'total': 0}
+
+        for pos in range(1,lt.size(lst)):
+         
+            keyDate = lt.getElement(lst, pos)
+            severity1 += int(getAccidentsBySeverity(analyzer, keyDate, '1'))
+            severity2 += int(getAccidentsBySeverity(analyzer, keyDate, '2'))
+            severity3 += int(getAccidentsBySeverity(analyzer, keyDate, '3'))
+            severity4 += int(getAccidentsBySeverity(analyzer, keyDate, '4')) 
+
+            severity1Date = int(getAccidentsBySeverity(analyzer, keyDate, '1'))
+            severity2Date = int(getAccidentsBySeverity(analyzer, keyDate, '2'))
+            severity3Date = int(getAccidentsBySeverity(analyzer, keyDate, '3'))
+            severity4Date = int(getAccidentsBySeverity(analyzer, keyDate, '4'))
+            totalDate = severity1Date + severity2Date + severity3Date + severity4Date
+
+            if totalDate >= mostAccidentsDate['total']:
+                mostAccidentsDate['date'] = keyDate
+                mostAccidentsDate['total'] = totalDate
+        
+        total = severity1 + severity2 + severity3 + severity4 
+            
+        return (total, mostAccidentsDate['date'])    
 
 # ==============================
 # Funciones de Comparacion

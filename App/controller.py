@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  """
-
+from DISClib.ADT import orderedmap as om
 import config as cf
 from App import model
 from time import process_time as crono
@@ -118,6 +118,22 @@ def maxKey(analyzer):
     return model.maxKey(analyzer)
   
 
-def getAccidentsBySeverity(analyzer, initialDate, severity):
-    initialDate = datetime.datetime.strptime(initialDate, '%Y-%m-%d')
-    return model.getAccidentsBySeverity(analyzer, initialDate.date(), severity)
+def getAccidentsBySeverity(analyzer, initialDate,):
+    try:
+        initialDate = datetime.datetime.strptime(initialDate, '%Y-%m-%d')
+        if om.contains(analyzer["dateIndex"], initialDate.date()) == False:
+            return "fecha"
+        else:
+            severity1 = int(model.getAccidentsBySeverity(analyzer, initialDate.date(), "1"))  
+            severity2 = int(model.getAccidentsBySeverity(analyzer, initialDate.date(), "2"))
+            severity3 = int(model.getAccidentsBySeverity(analyzer, initialDate.date(), "3"))
+            severity4 = int(model.getAccidentsBySeverity(analyzer, initialDate.date(), "4"))  
+            total = severity1 + severity2 + severity3 + severity4
+            return (total, severity1, severity2, severity3, severity4) 
+    except:
+        return "formato"        
+
+def getAccidentsBeforeDate(analyzer, finalDate):
+    finalDate = datetime.datetime.strptime(finalDate, '%Y-%m-%d')
+    return model.getAccidentsBeforeDate(analyzer, finalDate.date())
+          

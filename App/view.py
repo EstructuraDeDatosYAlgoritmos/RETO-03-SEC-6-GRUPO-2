@@ -23,6 +23,7 @@
 
 import sys
 import config
+from DISClib.ADT import map as m
 from DISClib.ADT import list as lt
 from App import controller
 assert config
@@ -97,9 +98,23 @@ def alt():
 #  Init Function
 # ___________________________________________________
 
-def ejecutarAccidentesFecha()->None:
+def ejecutarSeverityByDate(dataBase)->None:
     initialDate = input("\nIngrese la fecha (YYYY-MM-DD): ")
     print("\nBuscando accidentes de " + initialDate + "....")
+    print("Los resultados son:")
+    data = controller.getSeverityByDate(dataBase,initialDate)
+    count = len(data)
+    total = lt.removeFirst(data)
+    while count > 0:
+        count -= 1
+        result = lt.removeFirst(data)
+        if result is not None:
+            print(f"\tDe severidad {result[0]} se encontraron {result[1]} accidentes")
+
+    print(f"con un total de {total} accidentes")
+        
+
+
 
 def ejecutarAccidentesAntesDeFecha()->None:
     finalDate = input("\nIngrese la fecha tope (YYYY-MM-DD): ")
@@ -138,7 +153,7 @@ def main():
                 dataReady = True
 
             elif int(inputs[0]) == 2:  #opcion 2
-                ejecutarAccidentesFecha()
+                ejecutarSeverityByDate()
             
             elif int(inputs[0]) == 3:  #opcion 3
                 ejecutarAccidentesAntesDeFecha()    
